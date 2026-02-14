@@ -136,6 +136,9 @@
                 on:pointerenter="product-card/previewVariant/{{ featured_media.id }}"
                 on:pointerleave="product-card/resetVariant"
               >
+        {% liquid
+  assign swatch_variant = first_available_variant | default: product_option_value.variant
+%}
                 <input
                   type="radio"
                   name="{{ product_option.name | escape }}-{{ product_resource.id }}-swatch"
@@ -151,6 +154,13 @@
                   {% endif %}
                   data-variant-id="{{ first_available_variant.id | default: product_option_value.variant.id }}"
                   data-first-available-or-first-variant-id="{{ first_available_variant.id | default: product_option_value.variant.id }}"
+                  {% liquid
+                    assign swatch_variant = first_available_variant | default: product_option_value.variant
+                  %}
+
+                  data-hover-image="{% if swatch_variant and swatch_variant.metafields.custom.hover_image %}
+                    {{ swatch_variant.metafields.custom.hover_image.value | image_url: width: 600 }}
+                  {% endif %}"
                 >
                 {% render 'swatch',
                   swatch: product_option_value.swatch,

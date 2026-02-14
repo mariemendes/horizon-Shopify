@@ -112,6 +112,10 @@
               },
               "blocks": {}
             },
+            "swatches_custom": {
+              "type": "swatches",
+              "settings": {}
+            },
             "product_title_j7qXTx": {
               "type": "product-title",
               "name": "t:names.product_title",
@@ -164,6 +168,7 @@
           "block_order": [
             "product_card_gallery_cFExAi",
             "product_title_j7qXTx",
+            "swatches_custom",
             "price_fYkUgG"
           ]
         }

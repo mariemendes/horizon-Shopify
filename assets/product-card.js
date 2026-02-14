@@ -1,8 +1,18 @@
 import { OverflowList } from '@theme/overflow-list';
 import VariantPicker from '@theme/variant-picker';
 import { Component } from '@theme/component';
-import { debounce, isDesktopBreakpoint, mediaQueryLarge, yieldToMainThread } from '@theme/utilities';
-import { ThemeEvents, VariantSelectedEvent, VariantUpdateEvent, SlideshowSelectEvent } from '@theme/events';
+import {
+  debounce,
+  isDesktopBreakpoint,
+  mediaQueryLarge,
+  yieldToMainThread,
+} from '@theme/utilities';
+import {
+  ThemeEvents,
+  VariantSelectedEvent,
+  VariantUpdateEvent,
+  SlideshowSelectEvent,
+} from '@theme/events';
 import { morph } from '@theme/morph';
 
 /**
@@ -55,7 +65,8 @@ export class ProductCard extends Component {
   #navigateToURL = (event, url) => {
     // Check for modifier keys that should open in new tab/window (only for mouse events)
     const shouldOpenInNewTab =
-      event instanceof MouseEvent && (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1);
+      event instanceof MouseEvent &&
+      (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1);
 
     if (shouldOpenInNewTab) {
       event.preventDefault();
@@ -70,12 +81,19 @@ export class ProductCard extends Component {
     super.connectedCallback();
 
     const link = this.refs.productCardLink;
-    if (!(link instanceof HTMLAnchorElement)) throw new Error('Product card link not found');
+    if (!(link instanceof HTMLAnchorElement))
+      throw new Error('Product card link not found');
     this.#handleQuickAdd();
 
     this.addEventListener(ThemeEvents.variantUpdate, this.#handleVariantUpdate);
-    this.addEventListener(ThemeEvents.variantSelected, this.#handleVariantSelected);
-    this.addEventListener(SlideshowSelectEvent.eventName, this.#handleSlideshowSelect);
+    this.addEventListener(
+      ThemeEvents.variantSelected,
+      this.#handleVariantSelected,
+    );
+    this.addEventListener(
+      SlideshowSelectEvent.eventName,
+      this.#handleSlideshowSelect,
+    );
     mediaQueryLarge.addEventListener('change', this.#handleQuickAdd);
 
     this.addEventListener('click', this.navigateToProduct);
@@ -94,8 +112,11 @@ export class ProductCard extends Component {
   }
 
   #preloadNextPreviewImage() {
-    const currentSlide = this.refs.slideshow?.slides?.[this.refs.slideshow?.current];
-    currentSlide?.nextElementSibling?.querySelector('img[loading="lazy"]')?.removeAttribute('loading');
+    const currentSlide =
+      this.refs.slideshow?.slides?.[this.refs.slideshow?.current];
+    currentSlide?.nextElementSibling
+      ?.querySelector('img[loading="lazy"]')
+      ?.removeAttribute('loading');
   }
 
   /**
@@ -149,6 +170,7 @@ export class ProductCard extends Component {
     // Force overflow list to reflow after variant update
     // This fixes an issue where the overflow counter doesn't update properly in some browsers
     this.#updateOverflowList();
+    this.#updateHoverImageFromSwatch();
   };
 
   /**
@@ -157,8 +179,14 @@ export class ProductCard extends Component {
    */
   #updateOverflowList() {
     // Find the overflow list in the variant picker
-    const overflowList = this.querySelector('swatches-variant-picker-component overflow-list');
-    const isActiveOverflowList = overflowList?.querySelector('[slot="overflow"]') ? true : false;
+    const overflowList = this.querySelector(
+      'swatches-variant-picker-component overflow-list',
+    );
+    const isActiveOverflowList = overflowList?.querySelector(
+      '[slot="overflow"]',
+    )
+      ? true
+      : false;
     if (!overflowList || !isActiveOverflowList) return;
 
     // Use requestAnimationFrame to ensure DOM has been updated
@@ -168,7 +196,7 @@ export class ProductCard extends Component {
         new CustomEvent('reflow', {
           bubbles: true,
           detail: {},
-        })
+        }),
       );
     });
   }
@@ -178,8 +206,12 @@ export class ProductCard extends Component {
    * @param {VariantUpdateEvent} event - The variant update event.
    */
   updatePrice(event) {
-    const priceContainer = this.querySelectorAll(`product-price [ref='priceContainer']`)[1];
-    const newPriceElement = event.detail.data.html.querySelector(`product-price [ref='priceContainer']`);
+    const priceContainer = this.querySelectorAll(
+      `product-price [ref='priceContainer']`,
+    )[1];
+    const newPriceElement = event.detail.data.html.querySelector(
+      `product-price [ref='priceContainer']`,
+    );
 
     if (newPriceElement && priceContainer) {
       morph(priceContainer, newPriceElement);
@@ -191,14 +223,18 @@ export class ProductCard extends Component {
    * @param {VariantUpdateEvent} event - The variant update event.
    */
   #updateProductUrl(event) {
-    const anchorElement = event.detail.data.html?.querySelector('product-card a');
+    const anchorElement =
+      event.detail.data.html?.querySelector('product-card a');
     const featuredMediaUrl = event.detail.data.html
       ?.querySelector('product-card-link')
       ?.getAttribute('data-featured-media-url');
 
     // If the product card is inside a product link, update the product link's featured media URL
     if (featuredMediaUrl && this.closest('product-card-link'))
-      this.closest('product-card-link')?.setAttribute('data-featured-media-url', featuredMediaUrl);
+      this.closest('product-card-link')?.setAttribute(
+        'data-featured-media-url',
+        featuredMediaUrl,
+      );
 
     if (anchorElement instanceof HTMLAnchorElement) {
       // If the href is empty, don't update the product URL eg: unavailable variant
@@ -252,7 +288,8 @@ export class ProductCard extends Component {
       return;
     }
 
-    const selectedImageId = this.variantPicker?.selectedOption.dataset.optionMediaId;
+    const selectedImageId =
+      this.variantPicker?.selectedOption.dataset.optionMediaId;
 
     if (slideshow && selectedImageId) {
       const { slides = [] } = slideshow.refs;
@@ -265,6 +302,31 @@ export class ProductCard extends Component {
 
       slideshow.select({ id: selectedImageId }, undefined, { animate: false });
     }
+  }
+
+  #updateHoverImageFromSwatch() {
+    const checked = /** @type {HTMLInputElement | null} */ (
+      this.querySelector('input[type="radio"]:checked[data-variant-id]')
+    );
+    if (!checked) return;
+
+    const gallery = this.refs.cardGallery;
+    if (!gallery) return;
+
+    let imageUrl = checked?.dataset?.hoverImage || '';
+    if (!imageUrl) {
+      imageUrl = gallery.dataset.defaultHoverImage || '';
+    }
+    if (imageUrl.startsWith('//')) {
+      imageUrl = window.location.protocol + imageUrl;
+    }
+
+    const hoverImg = /** @type {HTMLInputElement | null} */ (
+      this.querySelector('.card-gallery__hover-image')
+    );
+    if (hoverImg && imageUrl && hoverImg.src !== imageUrl) {
+  hoverImg.src = imageUrl;
+}
   }
 
   /**
@@ -315,18 +377,12 @@ export class ProductCard extends Component {
   previewImage(event) {
     if (event.pointerType !== 'mouse') return;
 
-    const { slideshow } = this.refs;
+    const hoverImg = /** @type {HTMLInputElement | null} */ (
+      this.querySelector('.card-gallery__hover-image')
+    );
+    if (!hoverImg || !hoverImg.src) return;
 
-    if (!slideshow) return;
-
-    this.resetVariant.cancel();
-
-    if (this.#previousSlideIndex != null && this.#previousSlideIndex > 0) {
-      slideshow.select(this.#previousSlideIndex, undefined, { animate: false });
-    } else {
-      slideshow.next(undefined, { animate: false });
-      setTimeout(() => this.#preloadNextPreviewImage());
-    }
+    hoverImg.style.opacity = '1';
   }
 
   /**
@@ -336,14 +392,12 @@ export class ProductCard extends Component {
   resetImage(event) {
     if (event.pointerType !== 'mouse') return;
 
-    const { slideshow } = this.refs;
+    const hoverImg = /** @type {HTMLInputElement | null} */ (
+      this.querySelector('.card-gallery__hover-image')
+    );
+    if (!hoverImg) return;
 
-    if (!this.variantPicker) {
-      if (!slideshow) return;
-      slideshow.previous(undefined, { animate: false });
-    } else {
-      this.#resetVariant();
-    }
+    hoverImg.style.opacity = '0';
   }
 
   /**
@@ -394,7 +448,9 @@ export class ProductCard extends Component {
     // Don't navigate if this product card is marked as no-navigation (e.g., in theme editor)
     if (this.hasAttribute('data-no-navigation')) return;
 
-    const interactiveElement = event.target.closest('button, input, label, select, [tabindex="1"]');
+    const interactiveElement = event.target.closest(
+      'button, input, label, select, [tabindex="1"]',
+    );
 
     // If the click was on an interactive element, do nothing.
     if (interactiveElement) {
@@ -408,7 +464,9 @@ export class ProductCard extends Component {
     const productCardAnchor = link.getAttribute('id');
     if (!productCardAnchor) return;
 
-    const infiniteResultsList = this.closest('results-list[infinite-scroll="true"]');
+    const infiniteResultsList = this.closest(
+      'results-list[infinite-scroll="true"]',
+    );
     if (!window.Shopify.designMode && infiniteResultsList) {
       const url = new URL(window.location.href);
       const parent = this.closest('li');
@@ -455,15 +513,23 @@ class SwatchesVariantPickerComponent extends VariantPicker {
     this.parentProductCard = this.closest('product-card');
 
     // Listen for variant updates to apply pending URL changes
-    this.addEventListener(ThemeEvents.variantUpdate, this.#handleCardVariantUrlUpdate.bind(this));
+    this.addEventListener(
+      ThemeEvents.variantUpdate,
+      this.#handleCardVariantUrlUpdate.bind(this),
+    );
   }
 
   /**
    * Updates the card URL when a variant is selected.
    */
   #handleCardVariantUrlUpdate() {
-    if (this.pendingVariantId && this.parentProductCard instanceof ProductCard) {
-      const currentUrl = new URL(this.parentProductCard.refs.productCardLink.href);
+    if (
+      this.pendingVariantId &&
+      this.parentProductCard instanceof ProductCard
+    ) {
+      const currentUrl = new URL(
+        this.parentProductCard.refs.productCardLink.href,
+      );
       currentUrl.searchParams.set('variant', this.pendingVariantId);
       this.parentProductCard.refs.productCardLink.href = currentUrl.toString();
       this.pendingVariantId = null;
@@ -478,10 +544,15 @@ class SwatchesVariantPickerComponent extends VariantPicker {
     if (!(event.target instanceof HTMLElement)) return;
 
     // Check if this is a swatch input
-    const isSwatchInput = event.target instanceof HTMLInputElement && event.target.name?.includes('-swatch');
+    const isSwatchInput =
+      event.target instanceof HTMLInputElement &&
+      event.target.name?.includes('-swatch');
     const clickedSwatch = event.target;
-    const availableCount = parseInt(clickedSwatch.dataset.availableCount || '0');
-    const firstAvailableVariantId = clickedSwatch.dataset.firstAvailableOrFirstVariantId;
+    const availableCount = parseInt(
+      clickedSwatch.dataset.availableCount || '0',
+    );
+    const firstAvailableVariantId =
+      clickedSwatch.dataset.firstAvailableOrFirstVariantId;
 
     // For swatch inputs, check if we need special handling
     if (isSwatchInput && availableCount > 0 && firstAvailableVariantId) {
@@ -531,5 +602,8 @@ class SwatchesVariantPickerComponent extends VariantPicker {
 }
 
 if (!customElements.get('swatches-variant-picker-component')) {
-  customElements.define('swatches-variant-picker-component', SwatchesVariantPickerComponent);
+  customElements.define(
+    'swatches-variant-picker-component',
+    SwatchesVariantPickerComponent,
+  );
 }

@@ -62,7 +62,6 @@
     endif
   endif
 %}
-
 <div
   ref="cardGallery"
   class="card-gallery card-gallery-{{ block.id }} spacing-style border-style{% if has_badges %} card-gallery--badge-{{ badge_position }}{% endif %}"
@@ -80,22 +79,39 @@
     data-view-transition-to-main-product
   {% endif %}
   data-image-ratio="{{ block_settings.image_ratio }}"
+    data-default-hover-image="{% if product.media.size > 1 %}
+    {{ product.media[0] | image_url: width: 600 }}
+  {% endif %}"
   {{ block.shopify_attributes }}
 >
+  
+  {% if product %}
+  {% endif %}
   {%- if product.media.size > 0 -%}
     {% liquid
+      assign variant = product.selected_or_first_available_variant
+    assign color_handle = variant.title | handleize
+    assign hover_key = color_handle | append: '_secondary'
+
+    assign hover_media = nil
+    for media in product.media
+      if media.alt contains hover_key
+        assign hover_media = media
+        break
+      endif
+    endfor
+
       # Check if there are generic media that are not variant images
       assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src'
       assign generic_media_size = product.media.size | minus: variant_images.size
 
       # Sort media so product.featured_media.preview_image comes first as that is the most relevant image to display
       # product.featured_media updates based on search context and filters applied
-
       assign other_media = product.media | reject: 'src', product.featured_media
       assign media_list_to_show = product.featured_media | concat: other_media
 
       if product.media.size > 2 and generic_media_size > 0
-        assign show_arrows = true
+        assign show_arrows = false
       endif
 
       # Don't overfetch media if we don't need to
@@ -157,6 +173,15 @@
         assign slideshow_attributes = slideshow_attributes | append: ' disabled="true"'
       endif
     %}
+{% comment %} <div
+  class="swatch-debug"
+  data-swatch-debug
+  style="background:#111;color:#0f0;font:12px/1.4 monospace;padding:6px;margin:6px;border-radius:4px;"
+>
+  Swatch selected: (none)
+</div> {% endcomment %}
+
+
     <a
       class="contents"
       ref="cardGalleryLink"
@@ -171,6 +196,25 @@
         show_arrows: show_arrows,
         attributes: slideshow_attributes
       %}
+        <img
+          class="card-gallery__hover-image"
+          ref="hoverImage"
+          style="opacity:0;"
+          alt=""
+          width="100%"
+          height="100%"
+        />
+
+{% comment %} {% if hover_media %}
+  <img
+    class="card-gallery__hover-image"
+    src="{{ hover_media | image_url: width: 800 }}"
+    alt="{{ hover_media.alt | escape }}"
+    width="{{ hover_media.preview_image.width }}"
+    height="{{ hover_media.preview_image.height }}"
+    loading="lazy"
+  >
+{% endif %} {% endcomment %}
     </a>
   {% elsif product != blank and product.media.size == 0 %}
     <product-title class="product-card-gallery__title-placeholder">
@@ -365,4 +409,25 @@
   [product-grid-view='zoom-out'] .card-gallery .slideshow-control {
     min-width: auto;
   }
+.card-gallery {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-gallery__hover-image {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  pointer-events: none;
+  z-index: 2;
+}
+
 {% endstylesheet %}
