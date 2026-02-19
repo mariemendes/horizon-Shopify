@@ -24,6 +24,8 @@
   {% if attributes %}
     {{ attributes }}
   {% endif %}
+
+  style="display: contents;"
 >
   <template shadowrootmode="open">
     {{ 'overflow-list.css' | asset_url | stylesheet_tag }}

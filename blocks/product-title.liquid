@@ -10,6 +10,8 @@
     class="contents user-select-text"
     ref="productTitleLink"
     href="{{ closest.product.selected_or_first_available_variant.url }}"
+            style="font-weight: bold;
+    font-size: 16px;"
   >
     {% render 'text', fallback_text: product_title, block: block %}
   </a>

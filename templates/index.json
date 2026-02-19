@@ -253,7 +253,7 @@
                 "padding-block-start": 0,
                 "padding-block-end": 0,
                 "padding-inline-start": 0,
-                "padding-inline-end": 0
+                "padding-inline-end": 0,
               },
               "blocks": {}
             }
@@ -261,8 +261,8 @@
           "block_order": [
             "product_card_gallery_677WP3",
             "product_title_YXxMTj",
-            "swatches_custom",
-            "price_JQzVV4"
+            "price_JQzVV4",
+            "swatches_custom"
           ]
         }
       },
